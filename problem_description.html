@@ -1,0 +1,261 @@
+
+<!-- saved from url=(0076)https://www.cse.iitb.ac.in/~shivaram/teaching/old/cs747-a2023/pa-2/pa-2.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    
+    <link rel="stylesheet" type="text/css" href="./imgs/style.css">
+    <title>Playing Football!</title>
+  </head>
+
+  <body class="vsc-initialized">
+    <center>
+      <h2>2v1 Football Shootouts!</h2>
+      <h3>
+	( This is task has been adapted from an assignment in a prior offering of CS747 at IIT Bombay)
+      </h3>
+    </center>
+    
+
+
+    <h3>The Game</h3>
+
+    <p>
+
+    </p><p>
+      <b>Problem Description:</b><br> You are the manager of a
+      2-member football team. You want to prepare a strategy that
+      maximises the chances of scoring goals by doing MDP Planning!
+      You are tasked with the problem of Half Field Offense - scoring
+      a goal with two attackers against one defender. The football
+      half pitch is a 4x4 grid with a goal that is 2 units long. You
+      have two players - B1 and B2, with possession of the ball, whose
+      skill levels for different actions are parameterised by p and q
+      in [0, 0.5] and [0.6, 1]. Note that p and q correspond to
+      different actions by these players, and are identical for both
+      players. The opponent has a defender R. You must formulate this
+      as an MDP and score a goal before you lose possession! The game
+      ends when the players score a goal, or lose possession,
+      whichever occurs first. p and q are expected as inputs from the command line. (Use argparse python pakcgae for this)
+          </p>
+
+    <p align="center">
+      <img src="./imgs/Introduction.png" width="200px">
+      </p>
+      <p align="center">
+        <font size="3">Fig 1: (The playground)</font>
+      </p>
+    <p>
+
+    </p><p>
+    <b>Game positions: </b> <br>
+
+    The squares of the grid are numbered from 1 to 16 row-wise. Then the
+    game position can be specified in the following format --
+
+    [B1_square, B2_square, R_square, ball_possession].
+
+    Here B1 and B2 are players you control and R is a player from the
+    opponent team. Ball possession is an integer from 1,2 indicating which
+    player has the possession.<br>
+
+    Thus B1_square, B2_square, and R_square are 2-digit numbers, with a
+    leading 0 for square numbers below 10.
+    Note: In the problem statement, you will require x and y coordinates in
+    some cases, but you can use any origin/axis since only the relative
+    differences of coordinates matter.
+    
+</p>
+
+    <p align="center">
+      <img src="./imgs/Square_Numbering.png" width="200px">
+      </p>
+      <p align="center">
+        <font size="3">Fig 2: (The positions)</font>
+      </p>
+    <p>
+      <b>Actions:</b><br>
+Attempt to move one player L, R, U, or D by 1 unit. [0,1,2,3 correspond to L, R, U, D for B1 and 4,5,6,7 correspond to L, R, U, D for B2]<br>
+Attempt a pass to your teammate. [8]<br>
+Attempt a shot on the goal. [9]<br>
+Size of action space = 10.<br>
+
+    </p>
+
+    <p>You are provided with 3 opponent policy files in the data directory that the players can face in the game, giving the probability of the opponent action for each state.<br>
+      Opponent Policies:<br>
+      </p><ol>
+        <li>Greedy Defense: Move towards the player with the ball.</li>
+        <li>Park the Bus: Shuffle up and down in front of the goal.</li>
+        <li>Random Policy: Move randomly, uniformly </li>
+      </ol> 
+
+Opponent actions (present in the state-opponent policy file as probabilities):<br>
+Left movement<br>
+Right movement<br>
+Up movement<br>
+Down movement<br>
+    <p></p>
+
+<p>Note that your planner will only compute a policy for the agent
+(that is, the team of B1 and B2). In order to do so, you will be given
+R's policy, but you will not compute or change R's policy.</p>
+    
+
+    <h4>Transition Function:</h4>
+<p>
+
+      <b>Movement:</b> For moving with the ball (i.e. if movement with
+      the player in possession of the ball), the probability of success in the
+      desired
+      direction is 1-2p and 2p probability of losing possession
+      directly.
+      For moving without the ball there is a 1-p probability of moving
+      in the desired direction and p probability of the game ending (without a goal) directly.
+      If a player chooses to move in a particular direction, there is
+      zero probability of moving in any other direction.
+      The only stochasticity in movement is regarding losing possession
+      directly according to the probabilities described above.
+      If possession is lost, the episode ends. Additionally, If a player
+      goes out of bounds the episode ends.
+      
+</p>
+
+<p>
+
+  <b>Tackling:</b> There are two cases in which a tackling situation arises - <br>
+
+  A. If a player with possession of the ball and the opponent transition
+  to a position where they share the same square. The figures below show
+  an example game position and the actions chosen by the player to reach
+  this situation. In both of these cases, the probability of the tackle being successful given the move was successful is 0.5. The final probability values are shown in the figure.
+  Also, note that a tackling situation only arises when the player with the ball attempts to move.
+
+</p>
+          
+<p align="center">
+  <img src="./imgs/Tackling_Case_A.png" width="200px">
+  </p>
+  <p align="center">
+    <font size="3">Fig 3, 4: Tackling case A</font>
+  </p>
+<p>
+
+  </p><p>
+    State: Fig 3 <br>
+    Action: B1 attempts to move right<br>
+    Opponent Action: Move left from square 7 to 6 according to policy <br>
+    Outcomes: <b>P(Fig 4 | R moves to square 6) = 0.5 - p</b>, <b>P(episode ends | R moves to square 6) = 0.5 + p</b><br>
+  </p>
+
+  <p>
+    Note: Straight arrows represent player movement. Red squares represent the ball location. <br><br>
+    B. If a player with possession of the ball and the opponent are on adjacent squares and they successfully move towards each other, thus swapping squares. The figures below show an example game position and the actions chosen by the player to reach this situation.
+
+  </p>
+   
+  <p align="center">
+    <img src="./imgs/Tackling_Case_B.png" width="200px">
+    </p>
+    <p align="center">
+      <font size="3">Fig 5, 6: Tackling case B</font>
+    </p>
+
+  <p>
+    State: Fig 5 <br>
+    Action: B1 attempts to move right<br>
+    Opponent Action: Move left from square 6 to 5 according to policy <br>
+    Outcomes: <b>P(Fig 6 | R moves to square 6) = 0.5 - p</b>, <b>P(episode ends | R moves to square 6) = 0.5 + p</b><br>
+    </p>
+
+  <p>
+<b>Passing:</b> The probability is a function of the distance from the teammate for passing the ball. If player B1 is on (x1, y1) and B2 is on (x2, y2) then the probability of a successful pass is
+q - 0.1*max(|x1-x2|, |y1-y2|). This probability is halved if R moves to a square in between B1 and B2, including the squares of B1 and B2. A square is said to be in between two squares if its centre lies on the line joining the centres of the two squares. If a pass fails, then the game ends. While transitioning from one timestep to the next, <b>assume that R moves first and then a pass is attempted by the passer</b>. Thus the above condition must be checked for the new location of R. 
+Example configurations where R is considered to be in between are given below.
+</p>
+<p align="center">
+  <img src="./imgs/Passing_Between.png" width="200px">
+  </p>
+  <p align="center">
+    <font size="3">Fig 7, 8, 9: Passing with the opponent in between (Note: Curved arrows represent an attempted pass.)    </font>
+</p>
+
+<p>
+  State: Fig 7 <br>
+  Action: B1 attempts a pass to B2 <br>
+  Opponent Action: Move from some square to square 11 according to policy <br>
+  Outcomes: <b>P(successful pass | R moves to square 11) = 0.5q - 0.15</b>, <b>P(episode ends | R moves to square 11) = 1.15 - 0.5q</b> <br>
+ 
+ 
+   State: Fig 8 <br>
+  Action: B1 attempts a pass to B2 <br>
+  Opponent Action: Move from some square to square 7 according to policy <br>
+  Outcomes: <b>P(successful pass | R moves to square 7) = 0.5q - 0.1</b>, <b>P(episode ends | R moves to square 7) = 1.1 - 0.5q</b> <br>
+ 
+ 
+  State: Fig 9 <br>
+  Action: B1 attempts a pass to B2 <br>
+  Opponent Action: Move from some square to square 6 according to policy <br>
+  Outcomes: <b>P(successful pass | R moves to square 6) = 0.5q - 0.05</b>, <b>P(episode ends | R moves to square 6) = 1.05 - 0.5q</b> <br>
+ </p>
+
+    <p>
+      <b>Shooting:</b> For shooting towards the goal, the probability is a function of the distance of the x coordinate of the shooter. If B1 has the ball and is on (x1, y1) the probability of a goal is 
+<b>q - 0.2*(3-x1)</b>. This probability is halved if there is an opponent player in the two squares in front of the goal. If a shot fails, then the game ends. While transitioning from one timestep to the next, <b>assume that R moves first and then a shot is attempted by the shooter</b>. Thus the above condition must be checked for the new location of R. 
+    </p>
+
+
+    <p align="center">
+      <img src="./imgs/Shooting_Between.png" width="200px">
+      </p>
+      <p align="center">
+        <font size="3">Fig 10: Shooting with the opponent at the goal (Note: Wedged arrows represent an attempted shot.)    </font>
+    </p>
+
+    <p>
+      State: Fig 10 <br>
+      Action: B1 attempts a shot on goal <br>
+      Opponent Action: Move from some square to square 8 according to policy <br>
+      Outcomes: <b>P(goal | R moves to square 8) = 0.5q - 0.2</b>, <b>P(episode ends | R moves to square 8) = 1.2 - 0.5q</b> <br>
+     
+     
+     </p>
+
+<p>
+    <b>Inputs to be provided to students:</b>
+A list of game positions in the above coordinate system. 
+3 opponent policy documents with the action probabilities of each action by the opponent from each state in the above format.
+</p>
+
+<p>
+  <b> Output required from students:</b>
+	Expected number of goals scored against each of the three opponent policies. 
+Two graphs indicating the probability of winning starting from position
+[05, 09, 08, 1] (shown below) against policy-1 (greedy defense)<br>
+[Graph 1]: For p in {0, 0.1, 0.2, 0.3, 0.4, 0.5} and q = 0.7<br>
+[Graph 2]: For q in {0.6, 0.7, 0.8, 0.9, 1} and p = 0.3<br>
+</p>
+
+<p align="center">
+  <img src="./imgs/Starting_State_Graphs.png" width="200px">
+  </p>
+  <p align="center">
+    <font size="3">Fig 11: Starting state</font>
+</p>
+
+
+    <p></p><h3>Task 2 - MDP for 2v1 Football</h3>
+
+    <p>Encode your opponent's policy as an environment. On the command line, there should be a way for 
+      the user to specify the kind of policy the opponent will use (use argparse package for this)
+    </p>
+
+    <p>Obtain an ideal value through any method of your choice. Value Iteration on States is recommended. 
+      In that TD(0) or TD(lambda) with suitable small lambda values are recommended.</p>
+
+    
+    Attach the two graphs showing the variation in probability of winning with player parameters in the report along with observations. Do 
+the trends match with your intuition?
+    <hr>
+    <hr>
+
+
+</body></html>
