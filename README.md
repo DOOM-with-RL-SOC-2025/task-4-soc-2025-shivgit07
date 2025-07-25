@@ -1,5 +1,6 @@
 ## Week3: 2v1 Football Shootouts
 
+`All the code files along with a README.md containg proper exaplanation of code is inside **Shootout** Folder `
 
 ### Where's the detailed problem statement?
 This week's detailed problem description can be found in the html found in this project. You might want to clone this directory and then open the html file on your browser. The `imgs` folder would also be needed for proper rendering of the html page
