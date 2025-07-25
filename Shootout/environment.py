@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 GRID_SIZE = 4
 ACTIONS = {
@@ -37,29 +38,41 @@ class FootballEnv:
         return [pos[0] + direction[0], pos[1] + direction[1]]
 
     def step(self, action):
+
         if self.terminated:
             raise ValueError("Episode has terminated, reset to continue.")
 
-        b1, b2, r, who_has_ball = self.state
+        # Deep copy positions so changes do not leak between steps
+        b1 = copy.deepcopy(self.state[0])
+        b2 = copy.deepcopy(self.state[1])
+        r = copy.deepcopy(self.state[2])
+        who_has_ball = self.state[3]
 
-        # Defender moves first (R policy may depend on state)
-        r_action = self.defender_policy(self.state)
-        r_new = self.move(r, DIRECTIONS[r_action]) if r_action in DIRECTIONS else r
-        if self.is_out_of_bounds(r_new):
-            r_new = r  # defender can't go out of bounds
+        # Defender moves first
+        r_action = self.defender_policy([copy.deepcopy(b1), copy.deepcopy(b2), copy.deepcopy(r), who_has_ball])
+        if r_action in DIRECTIONS:
+            r_new = self.move(r, DIRECTIONS[r_action])
+            if self.is_out_of_bounds(r_new):
+                r_new = r  # Defender stays if move is out of bounds
+        else:
+            r_new = r
         r = r_new
 
-        #action by agent
-        if action in [0,1,2,3]:  # B1 moves
-            return self._player_move(0, DIRECTIONS[list(DIRECTIONS.keys())[action%4]], r)
-        elif action in [4,5,6,7]:  # B2 moves
-            return self._player_move(1, DIRECTIONS[list(DIRECTIONS.keys())[action%4]], r)
+        # Update the environment's defender position before processing the agent's action
+        self.state[2] = copy.deepcopy(r)
+
+        # Agent action handling
+        if action in [0, 1, 2, 3]:  # B1 moves
+            return self._player_move(0, DIRECTIONS[list(DIRECTIONS.keys())[action % 4]], r)
+        elif action in [4, 5, 6, 7]:  # B2 moves
+            return self._player_move(1, DIRECTIONS[list(DIRECTIONS.keys())[action % 4]], r)
         elif action == 8:  # Pass
             return self._pass(r)
         elif action == 9:  # Shoot
             return self._shoot(r)
         else:
             raise ValueError("Invalid action.")
+
 
     def _player_move(self, player_idx, direction, r):
         b1, b2, _, who_has_ball = self.state

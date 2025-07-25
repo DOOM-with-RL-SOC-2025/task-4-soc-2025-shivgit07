@@ -16,11 +16,13 @@ def parse_args():
     parser.add_argument('--gamma', type=float, default=1.0, help="Discount factor")
     parser.add_argument('--epsilon', type=float, default=0.1, help="Epsilon-greedy exploration rate")
     parser.add_argument('--lr', type=float, default=0.1, help="Learning rate")
-    parser.add_argument('--seed', type=int, default=None, help="Random seed")
+    parser.add_argument('--seed', type=int, default=42, help="Random seed")
     parser.add_argument('--plan', action='store_true', help="Run DP Value Iteration (offline planning)")
     parser.add_argument('--render', action='store_true', help="Render environment each step")
     parser.add_argument('--save', action='store_true', help="Save learning curve and rewards to results/")
     parser.add_argument('--animate', action='store_true', help="Visualize an episode as a matplotlib animation")
+    parser.add_argument('--animate_multi', type=int, default=0, help="Number of episodes to animate in a continuous sequence (0=off)")
+
     return parser.parse_args()
 
 def main():
@@ -101,6 +103,12 @@ def main():
         wins += reward
     win_rate = wins / eval_episodes
     print(f"Win rate over {eval_episodes} evaluation episodes: {win_rate:.2%}")
+
+    if args.animate_multi > 0:
+        print(f"Animating {args.animate_multi} continuous episodes...")
+        from utils import animate_multiple_episodes
+        animate_multiple_episodes(env, agent, num_episodes=args.animate_multi)
+
 
     # Optional animation of a single episode
     if args.animate:
